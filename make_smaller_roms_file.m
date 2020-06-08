@@ -42,7 +42,7 @@ size_3d = [dimid.xi, dimid.eta, dimid.time];
 size_4d = [dimid.xi, dimid.eta, dimid.N, dimid.time];
 size_z = [dimid.xi, dimid.eta, dimid.N];  % time-constant z
 
-v_id.time = netcdf.defVar(ncid, 'ocean_time', 'double', [dimid.time]);
+v_id.time = netcdf.defVar(ncid, 'time', 'double', [dimid.time]);
 
 for vars = {'lon','lat','h'}
     var = vars{1};
@@ -123,9 +123,11 @@ for vars = fieldnames(v_id)'
         i = find(strcmp({F.Variables(:).Name}, 'mask_rho'));
     end
 
+    if ~isempty(i)
     A = F.Variables(i).Attributes;
     for j = 1:length(A)
         netcdf.putAtt(ncid, v_id.(var), A(j).Name, A(j).Value)
+    end
     end
 
 end
