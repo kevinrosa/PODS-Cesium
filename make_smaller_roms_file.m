@@ -131,3 +131,6 @@ for vars = fieldnames(v_id)'
     end
 
 end
+
+% Done defining the NetCdf
+netcdf.endDef(ncid);
