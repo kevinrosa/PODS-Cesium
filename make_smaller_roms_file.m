@@ -62,44 +62,7 @@ end
 v_id.z = netcdf.defVar(ncid, 'z', 'double', size_z);
 
 
-% Done defining the NetCdf
-netcdf.endDef(ncid);
-
-
-%% Read data and write to new netcdf
-START = [xi(1) eta(1) 1 1];
-COUNT = [length(xi) length(eta) Inf Inf];
-
-ncwrite(new_fi, 'time', ncread(fi,'ocean_time'));
-
-ncwrite(new_fi, 'lon', ncread(fi,'lon_rho',START(1:2),COUNT(1:2)));
-ncwrite(new_fi, 'lat', ncread(fi,'lat_rho',START(1:2),COUNT(1:2)));
-ncwrite(new_fi, 'h', ncread(fi,'h',START(1:2),COUNT(1:2)));
-
-for vars = {'zeta'}
-    var = vars{1};
-    ncwrite(new_fi, var, ncread(fi,var,START([1,2,4]),COUNT([1,2,4])))
-end
-
-for vars = {'u_eastward','v_northward','temp','salt'}
-    var = vars{1};
-    ncwrite(new_fi, var, ncread(fi,var,START,COUNT))
-end
-
-%% compute z coordinates
-for vars = {'Vtransform','Vstretching','theta_s','theta_b','Tcline','hc'}
-    sig.(vars{1}) = ncread(fi, vars{1});
-end
-h = ncread(new_fi, 'h');
-igrid = 1;  % rho points
-z = set_depth(sig.Vtransform, sig.Vstretching, sig.theta_s, sig.theta_b, sig.hc, dimlen.N, ...
-    igrid, h, 0, 0);
-
-ncwrite(new_fi, 'z', z)
-
 %% Metadata
-% Re-enter define mode.
-netcdf.reDef(ncid);
 
 % Global attributes
 global_varid = netcdf.getConstant('GLOBAL');
@@ -134,3 +97,37 @@ end
 
 % Done defining the NetCdf
 netcdf.endDef(ncid);
+
+%%
+%
+%
+%% Read data and write to new netcdf
+START = [xi(1) eta(1) 1 1];
+COUNT = [length(xi) length(eta) Inf Inf];
+
+ncwrite(new_fi, 'time', ncread(fi,'ocean_time'));
+
+ncwrite(new_fi, 'lon', ncread(fi,'lon_rho',START(1:2),COUNT(1:2)));
+ncwrite(new_fi, 'lat', ncread(fi,'lat_rho',START(1:2),COUNT(1:2)));
+ncwrite(new_fi, 'h', ncread(fi,'h',START(1:2),COUNT(1:2)));
+
+for vars = {'zeta'}
+    var = vars{1};
+    ncwrite(new_fi, var, ncread(fi,var,START([1,2,4]),COUNT([1,2,4])))
+end
+
+for vars = {'u_eastward','v_northward','temp','salt'}
+    var = vars{1};
+    ncwrite(new_fi, var, ncread(fi,var,START,COUNT))
+end
+
+%% compute z coordinates
+for vars = {'Vtransform','Vstretching','theta_s','theta_b','Tcline','hc'}
+    sig.(vars{1}) = ncread(fi, vars{1});
+end
+h = ncread(new_fi, 'h');
+igrid = 1;  % rho points
+z = set_depth(sig.Vtransform, sig.Vstretching, sig.theta_s, sig.theta_b, sig.hc, dimlen.N, ...
+    igrid, h, 0, 0);
+
+ncwrite(new_fi, 'z', z)
