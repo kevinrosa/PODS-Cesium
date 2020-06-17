@@ -7,8 +7,63 @@ function make_smaller_roms_file(input_filename, new_filename, xi, eta)
 % - using constant z (not time-dependent vertical stretching) for now to
 %   make it easier to integrate with cesium.
 %
+% --------------------------------------
+% Converting to integers:
+% 8bit:  +/-   128
+% 16bit: +/- 32768
+% 
+%     Temp and Salt
+% datatype: int16
+% scale_factor: 1000
+% add_offset: 15
+% > range: -17 - +47
+% > accuracy: 0.001
+% 
+%     Velocity                            Velocity (alternative)
+% datatype: int16                     datatype: int8 
+% scale_factor: 10000                 scale_factor: 67
+% add_offset: 0                       add_offset: 0
+% > range: -3.2 - +3.2                > range: -1.9 - +1.9
+% > accuracy: 0.0001                  > accuracy: 0.015
+% 
+%     SSH (zeta)
+% datatype: int8
+% scale_factor: 50
+% add_offset: 0
+% > range: -2.5 - +2.5
+% > accuracy: 0.02
+% 
+%     Longitude
+% datatype: int16
+% scale_factor: 20000
+% add_offset: -71
+% > range: -72.6 - -69.4
+% > accuracy: 0.00005  (<5.6 m)
+% 
+%     Latitude
+% datatype: int16
+% scale_factor: 20000
+% add_offset: 41
+% > range: +39.4 - +42.6
+% > accuracy: 0.00005  (5.6 m)
+%
+%     Depth (h) and Z
+% datatype: int16
+% scale_factor: 100
+% add_offset: 0
+% > range: -327 - +327
+% > accuracy: 0.01  
+%
+% --------------------------------------
+%
+%
 % Kevin Rosa
 % June 7, 2020
+
+%{ 
+
+
+%}
 
 fi = input_filename;
 new_fi = new_filename;
@@ -46,23 +101,49 @@ v_id.time = netcdf.defVar(ncid, 'time', 'double', [dimid.time]);
 
 for vars = {'lon','lat','h'}
     var = vars{1};
-    v_id.(var) = netcdf.defVar(ncid, var, 'double', size_2d);
+    v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_2d);
 end
 
 for vars = {'zeta'}
     var = vars{1};
-    v_id.(var) = netcdf.defVar(ncid, var, 'NC_FLOAT', size_3d);
+    v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_3d);
 end
 
 for vars = {'u_eastward','v_northward','temp','salt'}
     var = vars{1};
-    v_id.(var) = netcdf.defVar(ncid, var, 'NC_FLOAT', size_4d);
+    v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_4d);
 end
 
-v_id.z = netcdf.defVar(ncid, 'z', 'double', size_z);
+v_id.z = netcdf.defVar(ncid, 'z', 'NC_BYTE', size_z);
+
+%% scale factors and offsets
+for vars = {'temp','salt'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/1000)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 15)
+end
+for vars = {'u_eastward','v_northward'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/1000)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 0)
+end
+for vars = {'zeta'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/50)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 0)
+end
+for vars = {'lon'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/20000)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', -71)
+end
+for vars = {'lat'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/20000)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 41)
+end
+for vars = {'h','z'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/100)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 0)
+end
 
 
-%% Metadata
+%% Other Metadata
 
 % Global attributes
 global_varid = netcdf.getConstant('GLOBAL');
