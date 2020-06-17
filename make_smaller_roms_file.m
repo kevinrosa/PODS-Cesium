@@ -54,6 +54,18 @@ function make_smaller_roms_file(input_filename, new_filename, xi, eta)
 % > range: -327 - +327
 % > accuracy: 0.01  
 %
+%
+% Info from Matlab ncwrite documentation:
+%
+% ncwrite function applies these attribute conventions in a sequence:
+% 
+%  1. Subtract the value of the add_offset attribute from vardata.
+% 
+%  2. Divide vardata by the value of the scale_factor attribute.
+% 
+%  3. Replace any NaN in vardata with the value contained in the _FillValue 
+%     attribute. If this attribute does not exist, then ncwrite uses the 
+%     fill value for this variable as specified by the NetCDF library.
 % --------------------------------------
 %
 %
@@ -116,7 +128,40 @@ end
 
 v_id.z = netcdf.defVar(ncid, 'z', 'NC_BYTE', size_z);
 
-%% scale factors and offsets
+
+%% Metadata
+
+% Global attributes
+global_varid = netcdf.getConstant('GLOBAL');
+netcdf.putAtt(ncid,global_varid,'creation_date',datestr(now));
+netcdf.putAtt(ncid,global_varid,'created_by','Kevin Rosa');
+netcdf.putAtt(ncid,global_varid,'source_file',fi);
+
+% Variable attributes
+for vars = fieldnames(v_id)'
+    var = vars{1};
+
+    i = find(strcmp({F.Variables(:).Name}, var));
+
+    if strcmp(var, 'time')
+        i = find(strcmp({F.Variables(:).Name}, 'ocean_time'));
+    elseif strcmp(var, 'lon')
+        i = find(strcmp({F.Variables(:).Name}, 'lon_rho'));
+    elseif strcmp(var, 'lat_rho')
+        i = find(strcmp({F.Variables(:).Name}, 'lat_rho'));
+    end
+
+    if ~isempty(i)
+    A = F.Variables(i).Attributes;
+    for j = 1:length(A)
+        netcdf.putAtt(ncid, v_id.(var), A(j).Name, A(j).Value)
+    end
+    end
+
+end
+
+
+%% scale factors, offsets, and fillvalues
 for vars = {'temp','salt'}
     netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/1000)
     netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 15)
@@ -143,40 +188,19 @@ for vars = {'h','z'}
 end
 
 
-%% Other Metadata
+% Apply FillValues
 
-% Global attributes
-global_varid = netcdf.getConstant('GLOBAL');
-netcdf.putAtt(ncid,global_varid,'creation_date',datestr(now));
-netcdf.putAtt(ncid,global_varid,'created_by','Kevin Rosa');
-netcdf.putAtt(ncid,global_varid,'source_file',fi);
-
-% Variable attributes
-for vars = fieldnames(v_id)'
-    var = vars{1};
-
-    i = find(strcmp({F.Variables(:).Name}, var));
-
-    if strcmp(var, 'time')
-        i = find(strcmp({F.Variables(:).Name}, 'ocean_time'));
-    elseif strcmp(var, 'lon')
-        i = find(strcmp({F.Variables(:).Name}, 'lon_rho'));
-    elseif strcmp(var, 'lat_rho')
-        i = find(strcmp({F.Variables(:).Name}, 'lat_rho'));
-    elseif strcmp(var, 'mask_rho')
-        i = find(strcmp({F.Variables(:).Name}, 'mask_rho'));
-    end
-
-    if ~isempty(i)
-    A = F.Variables(i).Attributes;
-    for j = 1:length(A)
-        netcdf.putAtt(ncid, v_id.(var), A(j).Name, A(j).Value)
-    end
-    end
-
+% for int16 varibles:
+for vars = {'temp','salt','u_eastward','v_northward','lon','lat','h','z'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -32768)
 end
 
-% Done defining the NetCdf
+% for int8 variables:
+for vars = {'zeta'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -128)
+end
+
+%% Exit define mode
 netcdf.endDef(ncid);
 
 %%
@@ -212,3 +236,5 @@ z = set_depth(sig.Vtransform, sig.Vstretching, sig.theta_s, sig.theta_b, sig.hc,
     igrid, h, 0, 0);
 
 ncwrite(new_fi, 'z', z)
+
+end
