@@ -7,7 +7,7 @@ eta = 550:1030;
 
 run_code = 'osom_2018_400';
 t_inds = 10:40;
-DIR = '~/projects/osom_2018/Output/';
+DIR = '/users/krosa1/projects/osom_2018/Output/';
 
 for t = t_inds
     fi_old = fullfile(DIR, sprintf('%s_his_%04i.nc', run_code, t));
