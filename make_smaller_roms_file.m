@@ -118,7 +118,7 @@ end
 
 for vars = {'zeta'}
     var = vars{1};
-    v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_3d);
+    v_id.(var) = netcdf.defVar(ncid, var, 'NC_BYTE', size_3d);
 end
 
 for vars = {'u_eastward','v_northward','temp','salt'}
@@ -126,8 +126,7 @@ for vars = {'u_eastward','v_northward','temp','salt'}
     v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_4d);
 end
 
-v_id.z = netcdf.defVar(ncid, 'z', 'NC_BYTE', size_z);
-
+v_id.z = netcdf.defVar(ncid, 'z', 'NC_SHORT', size_z);
 
 %% Metadata
 
@@ -147,19 +146,22 @@ for vars = fieldnames(v_id)'
         i = find(strcmp({F.Variables(:).Name}, 'ocean_time'));
     elseif strcmp(var, 'lon')
         i = find(strcmp({F.Variables(:).Name}, 'lon_rho'));
-    elseif strcmp(var, 'lat_rho')
+    elseif strcmp(var, 'lat')
         i = find(strcmp({F.Variables(:).Name}, 'lat_rho'));
     end
 
     if ~isempty(i)
     A = F.Variables(i).Attributes;
     for j = 1:length(A)
-        netcdf.putAtt(ncid, v_id.(var), A(j).Name, A(j).Value)
+        if ~strcmp('_FillValue', A(j).Name)  % old FillValue can cause error with new data type
+            netcdf.putAtt(ncid, v_id.(var), A(j).Name, A(j).Value)
+        end
     end
     end
 
 end
 
+fprintf('hi 1 \n')
 
 %% scale factors, offsets, and fillvalues
 for vars = {'temp','salt'}
@@ -192,14 +194,14 @@ end
 
 % for int16 varibles:
 for vars = {'temp','salt','u_eastward','v_northward','lon','lat','h','z'}
-    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -32768)
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', int16(-32767))
 end
 
 % for int8 variables:
 for vars = {'zeta'}
-    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -128)
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', int8(-127))
 end
-
+fprintf('hi 2 \n')
 %% Exit define mode
 netcdf.endDef(ncid);
 
