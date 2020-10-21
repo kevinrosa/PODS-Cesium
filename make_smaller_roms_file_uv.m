@@ -190,8 +190,10 @@ for vars = {'temp','salt'}
     netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 15)
 end
 for vars = {'u_eastward','v_northward'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'units', 'm/s')
     netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/1000)
     netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 0)
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'units', 'm/s')
 end
 for vars = {'zeta'}
     netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/50)
@@ -206,6 +208,7 @@ for vars = {'lat'}
     netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 41)
 end
 for vars = {'h','z'}
+    netcdf.putAtt(ncid, v_id.(vars{1}), 'units', 'meter')
     netcdf.putAtt(ncid, v_id.(vars{1}), 'scale_factor', 1/100)
     netcdf.putAtt(ncid, v_id.(vars{1}), 'add_offset', 0)
 end
