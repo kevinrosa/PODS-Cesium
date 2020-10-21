@@ -132,7 +132,7 @@ end
 
 for vars = {'zeta'}
     var = vars{1};
-    v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_3d);
+    v_id.(var) = netcdf.defVar(ncid, var, 'NC_BYTE', size_3d);
 end
 
 for vars = {'u_eastward','v_northward','temp','salt'}
@@ -140,7 +140,7 @@ for vars = {'u_eastward','v_northward','temp','salt'}
     v_id.(var) = netcdf.defVar(ncid, var, 'NC_SHORT', size_4d);
 end
 
-v_id.z = netcdf.defVar(ncid, 'z', 'NC_BYTE', size_z);
+v_id.z = netcdf.defVar(ncid, 'z', 'NC_SHORT', size_z);
 
 
 %% Metadata
@@ -215,12 +215,12 @@ end
 
 % for int16 varibles:
 for vars = {'temp','salt','u_eastward','v_northward','lon','lat','h','z'}
-    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -32768)
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', int16(-32768))
 end
 
 % for int8 variables:
 for vars = {'zeta'}
-    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', -128)
+    netcdf.putAtt(ncid, v_id.(vars{1}), '_FillValue', int8(-128))
 end
 
 %% Exit define mode
